@@ -9,41 +9,46 @@
 <body>
     <h1>Jogo Instalações Elétricas - Ligue os Pontos</h1>
 
-    <div id="game-container">
-        <div id="distribution-box" class="component">
-            <span>Quadro de Distribuição</span>
-            <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
-            <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
-        </div>
-
-        <div id="switch" class="component">
-            <span>Interruptor Simples</span>
-            <div class="terminal phase" data-component="switch" data-terminal="phase" title="Fase (Vermelho)"></div>
-            <div class="terminal return" data-component="switch" data-terminal="return" title="Retorno (Preto)"></div>
-        </div>
-
-        <div id="lamp" class="component">
-            <span>Lâmpada</span>
-            <div class="lamp-container">
-                <svg id="lamp-svg" width="80" height="120" viewBox="0 0 80 120">
-                    <!-- Lamp will be drawn here by JavaScript -->
-                </svg>
-                <div class="terminal return" data-component="lamp" data-terminal="return" title="Retorno (Preto)"></div>
-                <div class="terminal neutral" data-component="lamp" data-terminal="neutral" title="Neutro (Azul)"></div>
+    <div class="game-layout">
+        <!-- Sidebar para seleção de fios -->
+        <div id="wire-selector" class="sidebar">
+            <h2>Selecione o Fio:</h2>
+            <button data-color="red">Fio Vermelho (Fase)</button>
+            <button data-color="blue">Fio Azul (Neutro)</button>
+            <button data-color="black">Fio Preto (Retorno)</button>
+            <button id="reset-button">Reiniciar</button>
+            <div class="status-container">
+                <p>Status: <span id="status-message">Selecione um fio e clique em dois terminais para conectar.</span></p>
             </div>
         </div>
 
-        <svg id="wiring-layer"></svg>
+        <!-- Área principal do jogo -->
+        <div id="game-container">
+            <div id="distribution-box" class="component">
+                <span>Quadro de Distribuição</span>
+                <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
+                <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
+            </div>
 
-    </div>
+            <div id="switch" class="component">
+                <span>Interruptor Simples</span>
+                <div class="terminal phase" data-component="switch" data-terminal="phase" title="Fase (Vermelho)"></div>
+                <div class="terminal return" data-component="switch" data-terminal="return" title="Retorno (Preto)"></div>
+            </div>
 
-    <div id="wire-selector">
-        <h2>Selecione o Fio:</h2>
-        <button data-color="red">Fio Vermelho (Fase)</button>
-        <button data-color="blue">Fio Azul (Neutro)</button>
-        <button data-color="black">Fio Preto (Retorno)</button>
-        <button id="reset-button">Reiniciar</button>
-        <p>Status: <span id="status-message">Selecione um fio e clique em dois terminais para conectar.</span></p>
+            <div id="lamp" class="component">
+                <span>Lâmpada</span>
+                <div class="lamp-container">
+                    <svg id="lamp-svg" width="80" height="120" viewBox="0 0 80 120">
+                        <!-- Lamp will be drawn here by JavaScript -->
+                    </svg>
+                    <div class="terminal return" data-component="lamp" data-terminal="return" title="Retorno (Preto)"></div>
+                    <div class="terminal neutral" data-component="lamp" data-terminal="neutral" title="Neutro (Azul)"></div>
+                </div>
+            </div>
+
+            <svg id="wiring-layer"></svg>
+        </div>
     </div>
 
     <script src="script.js"></script>

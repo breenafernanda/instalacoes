@@ -4,75 +4,162 @@ body {
     flex-direction: column;
     align-items: center;
     margin-top: 20px;
-    background-color: #e0e0e0; /* Slightly darker background */
+    background-color: #e0e0e0;
 }
 
 h1 {
     color: #333;
+    margin-bottom: 20px;
 }
 
+/* Layout principal com sidebar e área de jogo */
+.game-layout {
+    display: flex;
+    width: 900px;
+    margin: 0 auto;
+}
+
+/* Sidebar para seleção de fios */
+.sidebar {
+    width: 200px;
+    background-color: #f0f0f0;
+    padding: 15px;
+    border-radius: 5px 0 0 5px;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar h2 {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.sidebar button {
+    width: 90%;
+    margin: 8px 0;
+    padding: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    font-size: 0.9em;
+    text-align: left;
+}
+
+.sidebar button[data-color="red"] { 
+    background-color: #dc3545; 
+    color: white; 
+    border-color: #dc3545; 
+}
+
+.sidebar button[data-color="blue"] { 
+    background-color: #007bff; 
+    color: white; 
+    border-color: #007bff; 
+}
+
+.sidebar button[data-color="black"] { 
+    background-color: #343a40; 
+    color: white; 
+    border-color: #343a40; 
+}
+
+#reset-button { 
+    background-color: #6c757d; 
+    color: white; 
+    border-color: #6c757d;
+    margin-top: 20px;
+}
+
+.sidebar button:hover {
+    opacity: 0.9;
+}
+
+/* Style for selected wire button */
+.sidebar button.selected {
+    box-shadow: 0 0 8px yellow;
+    border: 2px solid yellow;
+}
+
+.status-container {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    width: 100%;
+}
+
+#status-message {
+    font-style: italic;
+    color: #555;
+    font-size: 0.9em;
+    display: block;
+    min-height: 3em;
+}
+
+/* Área principal do jogo */
 #game-container {
     position: relative;
-    width: 600px;
-    height: 450px; /* Increased height for better spacing */
+    width: 700px;
+    height: 450px;
     border: 1px solid #ccc;
     background-color: #fff;
-    margin-bottom: 20px;
-    overflow: hidden; /* Hide overflow if elements go outside */
+    border-radius: 0 5px 5px 0;
+    overflow: hidden;
 }
 
 .component {
     position: absolute;
-    /* Removed default border/background for custom styling */
     text-align: center;
 }
 
 .component span {
     display: block;
-    margin-bottom: 5px; /* Reduced margin */
+    margin-bottom: 5px;
     font-weight: bold;
     color: #555;
     font-size: 0.9em;
 }
 
-/* Quadro de Distribuição - Simple Box */
+/* Quadro de Distribuição */
 #distribution-box {
     top: 30px;
-    left: 250px;
+    left: 300px;
     width: 100px;
     height: 50px;
-    background-color: #d3d3d3; /* Light gray */
-    border: 1px solid #a9a9a9; /* Darker gray border */
+    background-color: #d3d3d3;
+    border: 1px solid #a9a9a9;
     border-radius: 3px;
     box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
 }
 #distribution-box span {
     position: absolute;
-    top: -20px; /* Position label above */
+    top: -20px;
     left: 0;
     width: 100%;
 }
 
-/* Interruptor - More Realistic */
+/* Interruptor */
 #switch {
     bottom: 50px;
-    left: 100px;
-    width: 60px; /* Width of the switch plate */
-    height: 100px; /* Height of the switch plate */
-    background-color: #f8f8f8; /* Off-white */
+    left: 150px;
+    width: 60px;
+    height: 100px;
+    background-color: #f8f8f8;
     border: 1px solid #b0b0b0;
     border-radius: 5px;
     box-shadow: 1px 1px 3px rgba(0,0,0,0.1), inset 0 0 5px rgba(0,0,0,0.05);
-    cursor: pointer; /* Show pointer cursor on hover */
-    transition: all 0.2s ease; /* Smooth transition for toggle */
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 #switch span {
     position: absolute;
-    bottom: -20px; /* Position label below */
+    bottom: -20px;
     left: 0;
     width: 100%;
 }
-/* Switch toggle (visual only) */
+/* Switch toggle */
 #switch::before {
     content: '';
     position: absolute;
@@ -83,7 +170,7 @@ h1 {
     background-color: #e0e0e0;
     border: 1px solid #a0a0a0;
     border-radius: 2px;
-    transition: all 0.2s ease; /* Smooth transition for toggle */
+    transition: all 0.2s ease;
 }
 
 /* Switch ON state */
@@ -98,16 +185,16 @@ h1 {
     transform: translateY(10px);
 }
 
-/* Lâmpada - SVG Container */
+/* Lâmpada */
 #lamp {
-    bottom: 180px; /* Adjusted position */
-    right: 100px;
+    bottom: 180px;
+    right: 150px;
     width: 80px;
     height: 120px;
 }
 #lamp span {
     position: absolute;
-    top: -20px; /* Position label above */
+    top: -20px;
     left: 0;
     width: 100%;
 }
@@ -135,33 +222,32 @@ h1 {
     pointer-events: none;
 }
 
-/* Terminais - Smaller, positioned on components */
+/* Terminais */
 .terminal {
-    width: 12px; /* Smaller */
+    width: 12px;
     height: 12px;
     border: 1px solid #555;
     border-radius: 50%;
     position: absolute;
     cursor: pointer;
-    background-color: #fff; /* Default */
+    background-color: #fff;
     box-shadow: 0 0 3px rgba(0,0,0,0.2);
-    z-index: 10; /* Ensure terminals are clickable */
+    z-index: 10;
 }
 
 .terminal:hover {
     box-shadow: 0 0 6px rgba(0,0,255,0.6);
 }
 
-/* Terminal Colors & Positions (Adjusted for new visuals) */
+/* Terminal Colors & Positions */
 #distribution-box .terminal.phase { background-color: red; bottom: 5px; left: 15px; }
 #distribution-box .terminal.neutral { background-color: blue; bottom: 5px; right: 15px; }
 
-#switch .terminal.phase { background-color: red; top: 10px; left: 24px; } /* Top screw */
-#switch .terminal.return { background-color: black; bottom: 10px; left: 24px; } /* Bottom screw */
+#switch .terminal.phase { background-color: red; top: 10px; left: 24px; }
+#switch .terminal.return { background-color: black; bottom: 10px; left: 24px; }
 
-/* Position terminals on the lamp SVG */
-#lamp .terminal.return { background-color: black; top: 20px; left: 10px; } /* Left side of socket */
-#lamp .terminal.neutral { background-color: blue; top: 20px; right: 10px; } /* Right side of socket */
+#lamp .terminal.return { background-color: black; top: 20px; left: 10px; }
+#lamp .terminal.neutral { background-color: blue; top: 20px; right: 10px; }
 
 /* Wiring Layer */
 #wiring-layer {
@@ -170,47 +256,31 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to pass through to terminals */
+    pointer-events: none;
 }
 
-/* Wire Selector */
-#wire-selector {
-    text-align: center;
-    margin-top: 10px;
-}
-
-#wire-selector h2 {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-}
-
-#wire-selector button {
-    margin: 5px;
-    padding: 8px 12px; /* Slightly smaller buttons */
-    cursor: pointer;
-    border: 2px solid transparent; /* For selection highlight */
-    border-radius: 5px;
-    font-size: 0.9em;
-}
-
-#wire-selector button[data-color="red"] { background-color: #dc3545; color: white; border-color: #dc3545; }
-#wire-selector button[data-color="blue"] { background-color: #007bff; color: white; border-color: #007bff; }
-#wire-selector button[data-color="black"] { background-color: #343a40; color: white; border-color: #343a40; }
-#reset-button { background-color: #6c757d; color: white; border-color: #6c757d; }
-
-#wire-selector button:hover {
-    opacity: 0.9;
-}
-
-/* Style for selected wire button */
-#wire-selector button.selected {
-    box-shadow: 0 0 8px yellow;
-    border: 2px solid yellow;
-}
-
-#status-message {
-    margin-top: 15px;
-    font-style: italic;
-    color: #555;
-    min-height: 1.2em; /* Prevent layout shift */
+/* Responsividade para telas menores */
+@media (max-width: 920px) {
+    .game-layout {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        border-radius: 5px 5px 0 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .sidebar button {
+        width: auto;
+        margin: 5px;
+    }
+    
+    #game-container {
+        width: 100%;
+        border-radius: 0 0 5px 5px;
+    }
 }
