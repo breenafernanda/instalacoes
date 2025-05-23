@@ -876,31 +876,22 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Verificar conexões
         checkConnections: function() {
-            // Conexões obrigatórias para o circuito paralelo
-            const requiredConnections = [
-                // Fase do quadro ao borne superior do primeiro interruptor
-                { t1: 'db-p-phase', t2: 'switch-p1-top', color: 'red' },
-                
-                // Neutro do quadro ao neutro da lâmpada
-                { t1: 'db-p-neutral', t2: 'lamp-p-neutral', color: 'blue' },
-                
-                // Borne inferior do segundo interruptor ao retorno da lâmpada
-                { t1: 'switch-p2-bottom', t2: 'lamp-p-return', color: 'black' },
-                
-                // Conexão entre os interruptores pelos bornes do meio
-                { t1: 'switch-p1-middle', t2: 'switch-p2-middle', color: 'black' }
-            ];
+            // Verificar se temos fase conectada a um dos interruptores
+            const hasFaseToSwitch1 = this.hasConnection('db-p-phase', 'switch-p1-top', 'red');
             
-            // Verificar se todas as conexões obrigatórias estão presentes
-            this.isCircuitComplete = requiredConnections.every(reqConn => {
-                return this.connections.some(userConn => 
-                    userConn.color === reqConn.color &&
-                    (
-                        (userConn.id1 === reqConn.t1 && userConn.id2 === reqConn.t2) ||
-                        (userConn.id1 === reqConn.t2 && userConn.id2 === reqConn.t1)
-                    )
-                );
-            });
+            // Verificar se temos neutro do quadro para a lâmpada
+            const hasNeutroToLamp = this.hasConnection('db-p-neutral', 'lamp-p-neutral', 'blue');
+            
+            // Verificar se temos retorno do segundo interruptor para a lâmpada
+            const hasRetornoToLamp = this.hasConnection('switch-p2-bottom', 'lamp-p-return', 'black');
+            
+            // Verificar se temos dois retornos conectando os interruptores entre si
+            const hasRetornoBetweenSwitches1 = this.hasConnection('switch-p1-middle', 'switch-p2-top', 'black');
+            const hasRetornoBetweenSwitches2 = this.hasConnection('switch-p1-bottom', 'switch-p2-middle', 'black');
+            
+            // Todas as conexões devem estar presentes para o circuito estar completo
+            this.isCircuitComplete = hasFaseToSwitch1 && hasNeutroToLamp && hasRetornoToLamp && 
+                                    hasRetornoBetweenSwitches1 && hasRetornoBetweenSwitches2;
             
             // Atualizar estado da lâmpada
             this.updateLampState();
@@ -912,6 +903,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusMessage.textContent = 'Ligação do circuito paralelo correta! Clique em um dos interruptores para acender a lâmpada.';
                 }
             }
+        },
+        
+        // Verificar se existe uma conexão específica
+        hasConnection: function(terminal1, terminal2, color) {
+            return this.connections.some(conn => 
+                conn.color === color && 
+                (
+                    (conn.id1 === terminal1 && conn.id2 === terminal2) ||
+                    (conn.id1 === terminal2 && conn.id2 === terminal1)
+                )
+            );
         },
         
         // Resetar circuito
