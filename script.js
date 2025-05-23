@@ -876,18 +876,40 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Verificar conexões
         checkConnections: function() {
-            // Nesta versão simplificada, apenas verificamos se há conexões
-            // Em uma implementação completa, verificaríamos as conexões específicas do circuito paralelo
-            this.isCircuitComplete = this.connections.length >= 3;
+            // Conexões obrigatórias para o circuito paralelo
+            const requiredConnections = [
+                // Fase do quadro ao borne superior do primeiro interruptor
+                { t1: 'db-p-phase', t2: 'switch-p1-top', color: 'red' },
+                
+                // Neutro do quadro ao neutro da lâmpada
+                { t1: 'db-p-neutral', t2: 'lamp-p-neutral', color: 'blue' },
+                
+                // Borne inferior do segundo interruptor ao retorno da lâmpada
+                { t1: 'switch-p2-bottom', t2: 'lamp-p-return', color: 'black' },
+                
+                // Conexão entre os interruptores pelos bornes do meio
+                { t1: 'switch-p1-middle', t2: 'switch-p2-middle', color: 'black' }
+            ];
+            
+            // Verificar se todas as conexões obrigatórias estão presentes
+            this.isCircuitComplete = requiredConnections.every(reqConn => {
+                return this.connections.some(userConn => 
+                    userConn.color === reqConn.color &&
+                    (
+                        (userConn.id1 === reqConn.t1 && userConn.id2 === reqConn.t2) ||
+                        (userConn.id1 === reqConn.t2 && userConn.id2 === reqConn.t1)
+                    )
+                );
+            });
             
             // Atualizar estado da lâmpada
             this.updateLampState();
             
             if (this.isCircuitComplete) {
                 if (this.isLampOn) {
-                    statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
+                    statusMessage.textContent = 'Parabéns! A ligação do circuito paralelo está correta e a lâmpada acendeu!';
                 } else {
-                    statusMessage.textContent = 'Ligação correta! Clique em um dos interruptores para acender a lâmpada.';
+                    statusMessage.textContent = 'Ligação do circuito paralelo correta! Clique em um dos interruptores para acender a lâmpada.';
                 }
             }
         },
