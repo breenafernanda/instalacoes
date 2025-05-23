@@ -83,12 +83,12 @@ h1 {
     border-radius: 2px;
 }
 
-/* Lâmpada - More Realistic */
+/* Lâmpada - Using Image */
 #lamp {
     bottom: 180px; /* Adjusted position */
     right: 100px;
-    width: 60px;
-    height: 100px; /* Height includes bulb and socket */
+    width: 80px;
+    height: 120px;
 }
 #lamp span {
     position: absolute;
@@ -96,37 +96,29 @@ h1 {
     left: 0;
     width: 100%;
 }
-/* Lamp Socket */
-#lamp-socket {
-    width: 40px;
-    height: 30px;
-    background-color: #333; /* Black socket */
-    border-radius: 5px 5px 0 0;
-    margin: 0 auto;
+
+.lamp-image {
     position: relative;
-    top: 10px; /* Position socket */
-}
-/* Lamp Bulb */
-#lamp-bulb {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    margin: 0 auto;
-    position: relative;
-    top: 10px; /* Connects to socket */
-    background-color: #e8f0f8; /* Light blueish tint for off bulb */
-    box-shadow: inset 0 -2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    height: 100%;
 }
 
+#lamp-img {
+    width: 100%;
+    height: auto;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+/* Lamp state classes for JavaScript to toggle */
 .lamp-off {
-    background-color: #e8f0f8; /* Light blueish tint */
+    opacity: 0.8;
+    filter: brightness(0.8);
 }
 
 .lamp-on {
-    background-color: #fffacd; /* Lemon chiffon yellow */
-    box-shadow: 0 0 25px #ffd700, inset 0 0 10px #ffffff; /* Gold glow */
-    border-color: #fff;
+    opacity: 1;
+    filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 255, 0, 0.7));
 }
 
 /* Terminais - Smaller, positioned on components */
@@ -153,8 +145,9 @@ h1 {
 #switch .terminal.phase { background-color: red; top: 10px; left: 24px; } /* Top screw */
 #switch .terminal.return { background-color: black; bottom: 10px; left: 24px; } /* Bottom screw */
 
-#lamp .terminal.return { background-color: black; top: 15px; left: 5px; } /* Left side of socket */
-#lamp .terminal.neutral { background-color: blue; top: 15px; right: 5px; } /* Right side of socket */
+/* Position terminals on the lamp image */
+#lamp .terminal.return { background-color: black; top: 20px; left: 10px; } /* Left side of socket */
+#lamp .terminal.neutral { background-color: blue; top: 20px; right: 10px; } /* Right side of socket */
 
 /* Wiring Layer */
 #wiring-layer {
