@@ -1,445 +1,544 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const svgLayer = document.getElementById('wiring-layer');
-    const terminals = document.querySelectorAll('.terminal');
+    // Elementos comuns
     const wireSelectorButtons = document.querySelectorAll('#wire-selector button[data-color]');
     const resetButton = document.getElementById('reset-button');
     const statusMessage = document.getElementById('status-message');
-    const gameContainer = document.getElementById('game-container');
-    const lampSvg = document.getElementById('lamp-svg');
-    const switchElement = document.getElementById('switch');
-
-    let selectedWireColor = null;
-    let firstTerminal = null;
-    let connections = []; // Stores { id1: 'comp-term', id2: 'comp-term', color: 'red', element: polylineElement }
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
     
-    // Separate states for circuit and switch
-    let isCircuitComplete = false; // Whether all connections are correct
-    let isSwitchOn = true; // Whether the switch is in ON position
-    let isLampOn = false; // Actual lamp state (depends on both circuit and switch)
-    
-    // Grid configuration
-    const gridSize = 10; // Size of grid cells in pixels
-    const gridVisible = true; // Set to true for debugging
-    
-    // Polyline drawing state
-    let isDrawingWire = false;
-    let currentPolyline = null;
-    let currentPoints = [];
-    let currentWireColor = null;
-    let startTerminal = null;
-    let endTerminal = null;
-    
-    // Tooltip element for circuit state
+    // Tooltip element para estado do circuito
     const tooltip = document.createElement('div');
     tooltip.className = 'tooltip';
     tooltip.style.display = 'none';
     document.body.appendChild(tooltip);
-
-    // --- Initialize Grid ---
-    function initializeGrid() {
-        // Clear existing grid
-        const gridLines = svgLayer.querySelectorAll('.grid-line');
-        gridLines.forEach(line => line.remove());
-        
-        if (gridVisible) {
-            // Create grid lines for debugging
-            const width = gameContainer.clientWidth;
-            const height = gameContainer.clientHeight;
+    
+    // Estado global
+    let selectedWireColor = null;
+    let currentTab = 'simples';
+    
+    // --- Sistema de Abas ---
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.getAttribute('data-tab');
             
-            // Create vertical lines
-            for (let x = 0; x <= width; x += gridSize) {
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', x);
-                line.setAttribute('y1', 0);
-                line.setAttribute('x2', x);
-                line.setAttribute('y2', height);
-                line.setAttribute('stroke', '#ddd');
-                line.setAttribute('stroke-width', '0.5');
-                line.setAttribute('stroke-dasharray', '2,2');
-                line.classList.add('grid-line');
-                svgLayer.appendChild(line);
-            }
+            // Atualizar botões de aba
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
             
-            // Create horizontal lines
-            for (let y = 0; y <= height; y += gridSize) {
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', 0);
-                line.setAttribute('y1', y);
-                line.setAttribute('x2', width);
-                line.setAttribute('y2', y);
-                line.setAttribute('stroke', '#ddd');
-                line.setAttribute('stroke-width', '0.5');
-                line.setAttribute('stroke-dasharray', '2,2');
-                line.classList.add('grid-line');
-                svgLayer.appendChild(line);
-            }
-        }
-    }
-    
-    // --- Snap to Grid ---
-    function snapToGrid(value) {
-        return Math.round(value / gridSize) * gridSize;
-    }
-
-    // --- Draw Lamp using SVG ---
-    function drawLamp() {
-        // Clear existing content
-        lampSvg.innerHTML = '';
-        
-        // Create SVG elements for lamp
-        // Socket (black part)
-        const socket = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        socket.setAttribute('d', 'M30,20 L50,20 L45,40 L35,40 Z');
-        socket.setAttribute('fill', '#333');
-        socket.setAttribute('stroke', '#222');
-        socket.setAttribute('stroke-width', '1');
-        lampSvg.appendChild(socket);
-        
-        // Socket base (small connector)
-        const socketBase = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        socketBase.setAttribute('x', '35');
-        socketBase.setAttribute('y', '40');
-        socketBase.setAttribute('width', '10');
-        socketBase.setAttribute('height', '5');
-        socketBase.setAttribute('fill', '#555');
-        socketBase.setAttribute('stroke', '#333');
-        socketBase.setAttribute('stroke-width', '1');
-        lampSvg.appendChild(socketBase);
-        
-        // Bulb glass
-        const bulbGlass = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-        bulbGlass.setAttribute('cx', '40');
-        bulbGlass.setAttribute('cy', '65');
-        bulbGlass.setAttribute('rx', '20');
-        bulbGlass.setAttribute('ry', '25');
-        bulbGlass.setAttribute('fill', isLampOn ? '#ffffc0' : '#f0f0f0');
-        bulbGlass.setAttribute('stroke', '#ddd');
-        bulbGlass.setAttribute('stroke-width', '1');
-        bulbGlass.setAttribute('id', 'bulb-glass');
-        lampSvg.appendChild(bulbGlass);
-        
-        // Filament
-        const filament1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        filament1.setAttribute('d', 'M40,45 C35,50 45,60 40,65');
-        filament1.setAttribute('fill', 'none');
-        filament1.setAttribute('stroke', isLampOn ? '#ffff00' : '#aaa');
-        filament1.setAttribute('stroke-width', isLampOn ? '2' : '1');
-        filament1.setAttribute('id', 'filament1');
-        lampSvg.appendChild(filament1);
-        
-        const filament2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        filament2.setAttribute('d', 'M40,45 C45,50 35,60 40,65');
-        filament2.setAttribute('fill', 'none');
-        filament2.setAttribute('stroke', isLampOn ? '#ffff00' : '#aaa');
-        filament2.setAttribute('stroke-width', isLampOn ? '2' : '1');
-        filament2.setAttribute('id', 'filament2');
-        lampSvg.appendChild(filament2);
-        
-        // Glow effect when lamp is on
-        if (isLampOn) {
-            const glow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
-            glow.setAttribute('cx', '40');
-            glow.setAttribute('cy', '65');
-            glow.setAttribute('rx', '25');
-            glow.setAttribute('ry', '30');
-            glow.setAttribute('fill', 'rgba(255, 255, 200, 0.5)');
-            glow.setAttribute('filter', 'blur(5px)');
+            // Atualizar conteúdo de aba
+            tabContents.forEach(content => content.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
             
-            // Insert glow behind the bulb
-            lampSvg.insertBefore(glow, bulbGlass);
-        }
-    }
-    
-    // --- Draw Switch ---
-    function drawSwitch() {
-        // Update switch visual based on state
-        if (isSwitchOn) {
-            switchElement.classList.remove('switch-off');
-            switchElement.classList.add('switch-on');
-        } else {
-            switchElement.classList.remove('switch-on');
-            switchElement.classList.add('switch-off');
-        }
-        
-        // Update lamp state based on both circuit and switch
-        updateLampState();
-    }
-    
-    // --- Update Lamp State ---
-    function updateLampState() {
-        // Lamp is on only if circuit is complete AND switch is on
-        isLampOn = isCircuitComplete && isSwitchOn;
-        drawLamp();
-    }
-    
-    // --- Initial drawings ---
-    initializeGrid();
-    drawLamp();
-    drawSwitch();
-
-    // --- Switch Click Handler ---
-    switchElement.addEventListener('click', (e) => {
-        // Ignore clicks on terminals
-        if (e.target.classList.contains('terminal')) {
-            return;
-        }
-        
-        // Toggle switch state
-        isSwitchOn = !isSwitchOn;
-        
-        // Update visuals
-        drawSwitch();
-        
-        // Show tooltip
-        showTooltip(e, getCircuitStateMessage());
-        
-        // Update status message
-        if (isCircuitComplete) {
-            statusMessage.textContent = isSwitchOn ? 
-                'Interruptor ligado. Lâmpada acesa!' : 
-                'Interruptor desligado. Lâmpada apagada.';
-        } else {
-            statusMessage.textContent = 'Interruptor ' + (isSwitchOn ? 'ligado' : 'desligado') + 
-                ', mas o circuito não está completo.';
-        }
+            // Atualizar aba atual
+            currentTab = tabId;
+            
+            // Resetar estado ao trocar de aba
+            resetCurrentTab();
+            
+            statusMessage.textContent = `Aba ${tabId} selecionada. Selecione um fio e clique em dois terminais para conectar.`;
+        });
     });
     
-    // --- Tooltip Functions ---
+    // --- Seleção de Fios ---
+    wireSelectorButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            selectedWireColor = button.getAttribute('data-color');
+            statusMessage.textContent = `Fio ${selectedWireColor} selecionado. Clique no primeiro terminal.`;
+            
+            // Feedback visual para botão selecionado
+            wireSelectorButtons.forEach(btn => btn.style.border = 'none');
+            button.style.border = '2px solid yellow';
+            
+            // Cancelar qualquer desenho de fio em andamento
+            cancelWireDrawing();
+        });
+    });
+    
+    // --- Botão Reset ---
+    resetButton.addEventListener('click', () => {
+        resetCurrentTab();
+        statusMessage.textContent = 'Jogo reiniciado. Selecione um fio e clique em dois terminais para conectar.';
+        
+        // Resetar botões de seleção de fio
+        wireSelectorButtons.forEach(btn => btn.style.border = 'none');
+        selectedWireColor = null;
+    });
+    
+    // --- Função para resetar a aba atual ---
+    function resetCurrentTab() {
+        switch(currentTab) {
+            case 'simples':
+                simplesCircuit.reset();
+                break;
+            case 'paralelo':
+                paraleloCircuit.reset();
+                break;
+            case 'intermediario':
+                intermediarioCircuit.reset();
+                break;
+        }
+    }
+    
+    // --- Função para cancelar desenho de fio ---
+    function cancelWireDrawing() {
+        switch(currentTab) {
+            case 'simples':
+                simplesCircuit.cancelWireDrawing();
+                break;
+            case 'paralelo':
+                paraleloCircuit.cancelWireDrawing();
+                break;
+            case 'intermediario':
+                intermediarioCircuit.cancelWireDrawing();
+                break;
+        }
+    }
+    
+    // --- Função para mostrar tooltip ---
     function showTooltip(event, message) {
         tooltip.textContent = message;
         tooltip.style.display = 'block';
         tooltip.style.left = (event.pageX + 10) + 'px';
         tooltip.style.top = (event.pageY + 10) + 'px';
         
-        // Hide tooltip after 2 seconds
+        // Esconder tooltip após 2 segundos
         setTimeout(() => {
             tooltip.style.display = 'none';
         }, 2000);
     }
     
-    function getCircuitStateMessage() {
-        if (!isCircuitComplete) {
-            return 'Circuito desconectado';
-        }
-        return isSwitchOn ? 'Lâmpada acesa' : 'Lâmpada apagada';
-    }
-
-    // --- Wire Selection --- 
-    wireSelectorButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            selectedWireColor = button.getAttribute('data-color');
-            statusMessage.textContent = `Fio ${selectedWireColor} selecionado. Clique no primeiro terminal.`;
-            firstTerminal = null; // Reset first terminal selection when changing wire
-            // Visual feedback for selected button
-            wireSelectorButtons.forEach(btn => btn.style.border = 'none');
-            button.style.border = '2px solid yellow'; 
-            
-            // Cancel any ongoing wire drawing
-            cancelWireDrawing();
-        });
-    });
-
-    // --- Terminal Clicking --- 
-    terminals.forEach(terminal => {
-        terminal.addEventListener('click', (e) => {
-            if (!selectedWireColor) {
-                statusMessage.textContent = 'Erro: Selecione uma cor de fio primeiro!';
-                return;
-            }
-
-            const currentTerminalId = `${terminal.dataset.component}-${terminal.dataset.terminal}`;
-
-            // If we're already drawing a wire
-            if (isDrawingWire) {
-                // Check if we clicked on a terminal that's not the start terminal
-                if (terminal !== startTerminal) {
-                    // Complete the wire drawing
-                    endTerminal = terminal;
-                    
-                    // Add the final point (terminal position)
-                    const gameRect = gameContainer.getBoundingClientRect();
-                    const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
-                    const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
-                    
-                    currentPoints.push(x, y);
-                    updatePolyline();
-                    
-                    // Store the connection
-                    const startTerminalId = `${startTerminal.dataset.component}-${startTerminal.dataset.terminal}`;
-                    connections.push({
-                        id1: startTerminalId,
-                        id2: currentTerminalId,
-                        color: currentWireColor,
-                        element: currentPolyline
-                    });
-                    
-                    statusMessage.textContent = `Conexão ${currentWireColor} feita entre ${startTerminalId} e ${currentTerminalId}.`;
-                    
-                    // Reset drawing state
-                    isDrawingWire = false;
-                    currentPolyline = null;
-                    currentPoints = [];
-                    startTerminal = null;
-                    endTerminal = null;
-                    
-                    // Check connections
-                    checkConnections();
-                }
-                return;
-            }
-
-            // Start drawing a new wire
-            startTerminal = terminal;
-            currentWireColor = selectedWireColor;
-            isDrawingWire = true;
-            
-            // Create a new polyline
-            currentPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            currentPolyline.setAttribute('fill', 'none');
-            currentPolyline.setAttribute('stroke', currentWireColor);
-            currentPolyline.setAttribute('stroke-width', '3');
-            currentPolyline.setAttribute('stroke-linecap', 'round');
-            currentPolyline.setAttribute('stroke-linejoin', 'round');
-            svgLayer.appendChild(currentPolyline);
-            
-            // Add the first point (terminal position)
-            const gameRect = gameContainer.getBoundingClientRect();
-            const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
-            const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
-            
-            currentPoints = [x, y];
-            updatePolyline();
-            
-            // Visual feedback
-            terminal.style.boxShadow = '0 0 10px yellow';
-            
-            statusMessage.textContent = `Iniciando conexão do terminal ${currentTerminalId}. Clique nos pontos do grid para desenhar o fio e termine clicando em outro terminal.`;
-        });
-    });
-    
-    // --- Game Container Click for Wire Drawing ---
-    gameContainer.addEventListener('click', (e) => {
-        // Only process clicks when drawing a wire and not clicking on terminals
-        if (!isDrawingWire || e.target.classList.contains('terminal')) {
-            return;
-        }
-        
-        // Get click position relative to game container
-        const gameRect = gameContainer.getBoundingClientRect();
-        const x = e.clientX - gameRect.left;
-        const y = e.clientY - gameRect.top;
-        
-        // Snap to grid
-        const snappedX = snapToGrid(x);
-        const snappedY = snapToGrid(y);
-        
-        // Add point to current polyline
-        currentPoints.push(snappedX, snappedY);
-        updatePolyline();
-        
-        statusMessage.textContent = `Ponto adicionado (${snappedX}, ${snappedY}). Continue clicando para adicionar mais pontos ou clique em um terminal para finalizar.`;
-    });
-    
-    // --- Update Polyline ---
-    function updatePolyline() {
-        if (currentPolyline) {
-            currentPolyline.setAttribute('points', currentPoints.join(','));
-        }
-    }
-    
-    // --- Cancel Wire Drawing ---
-    function cancelWireDrawing() {
-        if (isDrawingWire && currentPolyline) {
-            // Remove the polyline from SVG
-            svgLayer.removeChild(currentPolyline);
-            
-            // Reset drawing state
-            isDrawingWire = false;
-            currentPolyline = null;
-            currentPoints = [];
-            
-            // Reset visual feedback
-            if (startTerminal) {
-                startTerminal.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
-                startTerminal = null;
-            }
-            
-            statusMessage.textContent = `Desenho de fio cancelado. Selecione um terminal para começar novamente.`;
-        }
-    }
-    
-    // Add key handler for Escape to cancel wire drawing
+    // --- Adicionar handler para tecla ESC ---
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             cancelWireDrawing();
         }
     });
-
-    // --- Connection Verification --- 
-    function checkConnections() {
-        const correctConnections = [
-            { t1: 'db-phase', t2: 'switch-phase', color: 'red' },
-            { t1: 'db-neutral', t2: 'lamp-neutral', color: 'blue' },
-            { t1: 'switch-return', t2: 'lamp-return', color: 'black' }
-        ];
-
-        if (connections.length === correctConnections.length) {
-            isCircuitComplete = correctConnections.every(correctConn => {
-                return connections.some(userConn => 
-                    userConn.color === correctConn.color &&
-                    (
-                        (userConn.id1 === correctConn.t1 && userConn.id2 === correctConn.t2) ||
-                        (userConn.id1 === correctConn.t2 && userConn.id2 === correctConn.t1)
-                    )
-                );
+    
+    // ========== CIRCUITO SIMPLES ==========
+    const simplesCircuit = {
+        svgLayer: document.getElementById('wiring-layer'),
+        gameContainer: document.getElementById('game-container'),
+        terminals: document.querySelectorAll('#tab-simples .terminal'),
+        lampSvg: document.getElementById('lamp-svg'),
+        switchElement: document.getElementById('switch'),
+        
+        // Estado do circuito simples
+        isDrawingWire: false,
+        currentPolyline: null,
+        currentPoints: [],
+        startTerminal: null,
+        endTerminal: null,
+        connections: [],
+        isCircuitComplete: false,
+        isSwitchOn: true,
+        isLampOn: false,
+        
+        // Configuração do grid
+        gridSize: 10,
+        gridVisible: true,
+        
+        // Inicialização
+        init: function() {
+            this.initializeGrid();
+            this.drawLamp();
+            this.setupEventListeners();
+        },
+        
+        // Configurar event listeners
+        setupEventListeners: function() {
+            // Click nos terminais
+            this.terminals.forEach(terminal => {
+                terminal.addEventListener('click', (e) => this.handleTerminalClick(e, terminal));
             });
-        } else {
-            isCircuitComplete = false;
-        }
-
-        // Update lamp state based on circuit and switch
-        updateLampState();
+            
+            // Click no interruptor
+            this.switchElement.addEventListener('click', (e) => this.handleSwitchClick(e));
+            
+            // Click no container do jogo para desenhar fios
+            this.gameContainer.addEventListener('click', (e) => this.handleGameContainerClick(e));
+        },
         
-        if (isCircuitComplete) {
-            if (isSwitchOn) {
-                statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
-            } else {
-                statusMessage.textContent = 'Ligação correta! Clique no interruptor para acender a lâmpada.';
+        // Inicializar grid
+        initializeGrid: function() {
+            // Limpar grid existente
+            const gridLines = this.svgLayer.querySelectorAll('.grid-line');
+            gridLines.forEach(line => line.remove());
+            
+            if (this.gridVisible) {
+                const width = this.gameContainer.clientWidth;
+                const height = this.gameContainer.clientHeight;
+                
+                // Criar linhas verticais
+                for (let x = 0; x <= width; x += this.gridSize) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', x);
+                    line.setAttribute('y1', 0);
+                    line.setAttribute('x2', x);
+                    line.setAttribute('y2', height);
+                    line.setAttribute('stroke', '#ddd');
+                    line.setAttribute('stroke-width', '0.5');
+                    line.setAttribute('stroke-dasharray', '2,2');
+                    line.classList.add('grid-line');
+                    this.svgLayer.appendChild(line);
+                }
+                
+                // Criar linhas horizontais
+                for (let y = 0; y <= height; y += this.gridSize) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', 0);
+                    line.setAttribute('y1', y);
+                    line.setAttribute('x2', width);
+                    line.setAttribute('y2', y);
+                    line.setAttribute('stroke', '#ddd');
+                    line.setAttribute('stroke-width', '0.5');
+                    line.setAttribute('stroke-dasharray', '2,2');
+                    line.classList.add('grid-line');
+                    this.svgLayer.appendChild(line);
+                }
             }
+        },
+        
+        // Desenhar lâmpada
+        drawLamp: function() {
+            // Limpar conteúdo existente
+            this.lampSvg.innerHTML = '';
+            
+            // Socket (parte preta)
+            const socket = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            socket.setAttribute('d', 'M30,20 L50,20 L45,40 L35,40 Z');
+            socket.setAttribute('fill', '#333');
+            socket.setAttribute('stroke', '#222');
+            socket.setAttribute('stroke-width', '1');
+            this.lampSvg.appendChild(socket);
+            
+            // Base do socket
+            const socketBase = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            socketBase.setAttribute('x', '35');
+            socketBase.setAttribute('y', '40');
+            socketBase.setAttribute('width', '10');
+            socketBase.setAttribute('height', '5');
+            socketBase.setAttribute('fill', '#555');
+            socketBase.setAttribute('stroke', '#333');
+            socketBase.setAttribute('stroke-width', '1');
+            this.lampSvg.appendChild(socketBase);
+            
+            // Vidro da lâmpada
+            const bulbGlass = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            bulbGlass.setAttribute('cx', '40');
+            bulbGlass.setAttribute('cy', '65');
+            bulbGlass.setAttribute('rx', '20');
+            bulbGlass.setAttribute('ry', '25');
+            bulbGlass.setAttribute('fill', this.isLampOn ? '#ffffc0' : '#f0f0f0');
+            bulbGlass.setAttribute('stroke', '#ddd');
+            bulbGlass.setAttribute('stroke-width', '1');
+            bulbGlass.setAttribute('id', 'bulb-glass');
+            this.lampSvg.appendChild(bulbGlass);
+            
+            // Filamentos
+            const filament1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            filament1.setAttribute('d', 'M40,45 C35,50 45,60 40,65');
+            filament1.setAttribute('fill', 'none');
+            filament1.setAttribute('stroke', this.isLampOn ? '#ffff00' : '#aaa');
+            filament1.setAttribute('stroke-width', this.isLampOn ? '2' : '1');
+            filament1.setAttribute('id', 'filament1');
+            this.lampSvg.appendChild(filament1);
+            
+            const filament2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            filament2.setAttribute('d', 'M40,45 C45,50 35,60 40,65');
+            filament2.setAttribute('fill', 'none');
+            filament2.setAttribute('stroke', this.isLampOn ? '#ffff00' : '#aaa');
+            filament2.setAttribute('stroke-width', this.isLampOn ? '2' : '1');
+            filament2.setAttribute('id', 'filament2');
+            this.lampSvg.appendChild(filament2);
+            
+            // Efeito de brilho quando a lâmpada está acesa
+            if (this.isLampOn) {
+                const glow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                glow.setAttribute('cx', '40');
+                glow.setAttribute('cy', '65');
+                glow.setAttribute('rx', '25');
+                glow.setAttribute('ry', '30');
+                glow.setAttribute('fill', 'rgba(255, 255, 200, 0.5)');
+                glow.setAttribute('filter', 'blur(5px)');
+                
+                // Inserir brilho atrás da lâmpada
+                this.lampSvg.insertBefore(glow, bulbGlass);
+            }
+        },
+        
+        // Desenhar interruptor
+        drawSwitch: function() {
+            // Atualizar visual do interruptor baseado no estado
+            if (this.isSwitchOn) {
+                this.switchElement.classList.remove('switch-off');
+                this.switchElement.classList.add('switch-on');
+            } else {
+                this.switchElement.classList.remove('switch-on');
+                this.switchElement.classList.add('switch-off');
+            }
+            
+            // Atualizar estado da lâmpada
+            this.updateLampState();
+        },
+        
+        // Atualizar estado da lâmpada
+        updateLampState: function() {
+            // Lâmpada acesa apenas se circuito estiver completo E interruptor ligado
+            this.isLampOn = this.isCircuitComplete && this.isSwitchOn;
+            this.drawLamp();
+        },
+        
+        // Handler para click no interruptor
+        handleSwitchClick: function(e) {
+            // Ignorar clicks nos terminais
+            if (e.target.classList.contains('terminal')) {
+                return;
+            }
+            
+            // Alternar estado do interruptor
+            this.isSwitchOn = !this.isSwitchOn;
+            
+            // Atualizar visual
+            this.drawSwitch();
+            
+            // Mostrar tooltip
+            showTooltip(e, this.getCircuitStateMessage());
+            
+            // Atualizar mensagem de status
+            if (this.isCircuitComplete) {
+                statusMessage.textContent = this.isSwitchOn ? 
+                    'Interruptor ligado. Lâmpada acesa!' : 
+                    'Interruptor desligado. Lâmpada apagada.';
+            } else {
+                statusMessage.textContent = 'Interruptor ' + (this.isSwitchOn ? 'ligado' : 'desligado') + 
+                    ', mas o circuito não está completo.';
+            }
+        },
+        
+        // Obter mensagem de estado do circuito
+        getCircuitStateMessage: function() {
+            if (!this.isCircuitComplete) {
+                return 'Circuito desconectado';
+            }
+            return this.isSwitchOn ? 'Lâmpada acesa' : 'Lâmpada apagada';
+        },
+        
+        // Handler para click nos terminais
+        handleTerminalClick: function(e, terminal) {
+            if (!selectedWireColor) {
+                statusMessage.textContent = 'Erro: Selecione uma cor de fio primeiro!';
+                return;
+            }
+            
+            const currentTerminalId = `${terminal.dataset.component}-${terminal.dataset.terminal}`;
+            
+            // Se já estamos desenhando um fio
+            if (this.isDrawingWire) {
+                // Verificar se clicamos em um terminal que não é o terminal inicial
+                if (terminal !== this.startTerminal) {
+                    // Completar o desenho do fio
+                    this.endTerminal = terminal;
+                    
+                    // Adicionar o ponto final (posição do terminal)
+                    const gameRect = this.gameContainer.getBoundingClientRect();
+                    const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
+                    const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
+                    
+                    this.currentPoints.push(x, y);
+                    this.updatePolyline();
+                    
+                    // Armazenar a conexão
+                    const startTerminalId = `${this.startTerminal.dataset.component}-${this.startTerminal.dataset.terminal}`;
+                    this.connections.push({
+                        id1: startTerminalId,
+                        id2: currentTerminalId,
+                        color: selectedWireColor,
+                        element: this.currentPolyline
+                    });
+                    
+                    statusMessage.textContent = `Conexão ${selectedWireColor} feita entre ${startTerminalId} e ${currentTerminalId}.`;
+                    
+                    // Resetar estado de desenho
+                    this.isDrawingWire = false;
+                    this.currentPolyline = null;
+                    this.currentPoints = [];
+                    this.startTerminal.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+                    this.startTerminal = null;
+                    this.endTerminal = null;
+                    
+                    // Verificar conexões
+                    this.checkConnections();
+                }
+                return;
+            }
+            
+            // Iniciar desenho de um novo fio
+            this.startTerminal = terminal;
+            this.isDrawingWire = true;
+            
+            // Criar uma nova polyline
+            this.currentPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            this.currentPolyline.setAttribute('fill', 'none');
+            this.currentPolyline.setAttribute('stroke', selectedWireColor);
+            this.currentPolyline.setAttribute('stroke-width', '3');
+            this.currentPolyline.setAttribute('stroke-linecap', 'round');
+            this.currentPolyline.setAttribute('stroke-linejoin', 'round');
+            this.svgLayer.appendChild(this.currentPolyline);
+            
+            // Adicionar o primeiro ponto (posição do terminal)
+            const gameRect = this.gameContainer.getBoundingClientRect();
+            const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
+            const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
+            
+            this.currentPoints = [x, y];
+            this.updatePolyline();
+            
+            // Feedback visual
+            terminal.style.boxShadow = '0 0 10px yellow';
+            
+            statusMessage.textContent = `Iniciando conexão do terminal ${currentTerminalId}. Clique nos pontos do grid para desenhar o fio e termine clicando em outro terminal.`;
+        },
+        
+        // Handler para click no container do jogo
+        handleGameContainerClick: function(e) {
+            // Processar apenas clicks quando estamos desenhando um fio e não clicando em terminais
+            if (!this.isDrawingWire || e.target.classList.contains('terminal')) {
+                return;
+            }
+            
+            // Obter posição do click relativa ao container do jogo
+            const gameRect = this.gameContainer.getBoundingClientRect();
+            const x = e.clientX - gameRect.left;
+            const y = e.clientY - gameRect.top;
+            
+            // Alinhar ao grid
+            const snappedX = this.snapToGrid(x);
+            const snappedY = this.snapToGrid(y);
+            
+            // Adicionar ponto à polyline atual
+            this.currentPoints.push(snappedX, snappedY);
+            this.updatePolyline();
+            
+            statusMessage.textContent = `Ponto adicionado (${snappedX}, ${snappedY}). Continue clicando para adicionar mais pontos ou clique em um terminal para finalizar.`;
+        },
+        
+        // Alinhar ao grid
+        snapToGrid: function(value) {
+            return Math.round(value / this.gridSize) * this.gridSize;
+        },
+        
+        // Atualizar polyline
+        updatePolyline: function() {
+            if (this.currentPolyline) {
+                this.currentPolyline.setAttribute('points', this.currentPoints.join(','));
+            }
+        },
+        
+        // Cancelar desenho de fio
+        cancelWireDrawing: function() {
+            if (this.isDrawingWire && this.currentPolyline) {
+                // Remover a polyline do SVG
+                this.svgLayer.removeChild(this.currentPolyline);
+                
+                // Resetar estado de desenho
+                this.isDrawingWire = false;
+                this.currentPolyline = null;
+                this.currentPoints = [];
+                
+                // Resetar feedback visual
+                if (this.startTerminal) {
+                    this.startTerminal.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+                    this.startTerminal = null;
+                }
+                
+                statusMessage.textContent = `Desenho de fio cancelado. Selecione um terminal para começar novamente.`;
+            }
+        },
+        
+        // Verificar conexões
+        checkConnections: function() {
+            const correctConnections = [
+                { t1: 'db-phase', t2: 'switch-phase', color: 'red' },
+                { t1: 'db-neutral', t2: 'lamp-neutral', color: 'blue' },
+                { t1: 'switch-return', t2: 'lamp-return', color: 'black' }
+            ];
+            
+            if (this.connections.length === correctConnections.length) {
+                this.isCircuitComplete = correctConnections.every(correctConn => {
+                    return this.connections.some(userConn => 
+                        userConn.color === correctConn.color &&
+                        (
+                            (userConn.id1 === correctConn.t1 && userConn.id2 === correctConn.t2) ||
+                            (userConn.id1 === correctConn.t2 && userConn.id2 === correctConn.t1)
+                        )
+                    );
+                });
+            } else {
+                this.isCircuitComplete = false;
+            }
+            
+            // Atualizar estado da lâmpada
+            this.updateLampState();
+            
+            if (this.isCircuitComplete) {
+                if (this.isSwitchOn) {
+                    statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
+                } else {
+                    statusMessage.textContent = 'Ligação correta! Clique no interruptor para acender a lâmpada.';
+                }
+            }
+        },
+        
+        // Resetar circuito
+        reset: function() {
+            // Cancelar qualquer desenho de fio em andamento
+            this.cancelWireDrawing();
+            
+            // Limpar linhas SVG
+            const wireElements = this.svgLayer.querySelectorAll('polyline:not(.grid-line)');
+            wireElements.forEach(el => el.remove());
+            
+            // Reinicializar grid
+            this.initializeGrid();
+            
+            // Limpar array de conexões
+            this.connections = [];
+            
+            // Resetar variáveis de estado
+            this.isCircuitComplete = false;
+            this.isSwitchOn = true;
+            
+            // Resetar lâmpada
+            this.updateLampState();
+            this.drawSwitch();
+            
+            // Resetar estilo dos terminais
+            this.terminals.forEach(term => term.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)');
         }
-    }
-
-    // --- Reset Button --- 
-    resetButton.addEventListener('click', () => {
-        // Cancel any ongoing wire drawing
-        cancelWireDrawing();
-        
-        // Clear SVG lines
-        const wireElements = svgLayer.querySelectorAll('polyline:not(.grid-line)');
-        wireElements.forEach(el => el.remove());
-        
-        // Reinitialize grid
-        initializeGrid();
-        
-        // Clear connections array
-        connections = [];
-        
-        // Reset state variables
-        selectedWireColor = null;
-        firstTerminal = null;
-        isCircuitComplete = false;
-        isSwitchOn = true;
-        
-        // Reset lamp
-        updateLampState();
-        drawSwitch();
-        
-        // Reset status message
-        statusMessage.textContent = 'Jogo reiniciado. Selecione um fio e clique em dois terminais para conectar.';
-        
-        // Reset button styles
-        wireSelectorButtons.forEach(btn => btn.style.border = 'none');
-        terminals.forEach(term => term.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)');
-    });
-
+    };
+    
+    // ========== CIRCUITO PARALELO ==========
+    const paraleloCircuit = {
+        // Implementação básica para evitar erros
+        reset: function() {
+            // Será implementado posteriormente
+        },
+        cancelWireDrawing: function() {
+            // Será implementado posteriormente
+        }
+    };
+    
+    // ========== CIRCUITO INTERMEDIÁRIO ==========
+    const intermediarioCircuit = {
+        // Implementação básica para evitar erros
+        reset: function() {
+            // Será implementado posteriormente
+        },
+        cancelWireDrawing: function() {
+            // Será implementado posteriormente
+        }
+    };
+    
+    // Inicializar o circuito simples
+    simplesCircuit.init();
 });

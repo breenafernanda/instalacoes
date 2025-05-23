@@ -9,6 +9,13 @@
 <body>
     <h1>Jogo Instalações Elétricas - Ligue os Pontos</h1>
 
+    <!-- Sistema de abas -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="simples">Interruptor Simples</button>
+        <button class="tab-button" data-tab="paralelo">Interruptor Paralelo</button>
+        <button class="tab-button" data-tab="intermediario">Interruptor Intermediário</button>
+    </div>
+
     <div class="game-layout">
         <!-- Sidebar para seleção de fios -->
         <div id="wire-selector" class="sidebar">
@@ -22,32 +29,104 @@
             </div>
         </div>
 
-        <!-- Área principal do jogo -->
-        <div id="game-container">
-            <div id="distribution-box" class="component">
-                <span>Quadro de Distribuição</span>
-                <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
-                <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
-            </div>
-
-            <div id="switch" class="component">
-                <span>Interruptor Simples</span>
-                <div class="terminal phase" data-component="switch" data-terminal="phase" title="Fase (Vermelho)"></div>
-                <div class="terminal return" data-component="switch" data-terminal="return" title="Retorno (Preto)"></div>
-            </div>
-
-            <div id="lamp" class="component">
-                <span>Lâmpada</span>
-                <div class="lamp-container">
-                    <svg id="lamp-svg" width="80" height="120" viewBox="0 0 80 120">
-                        <!-- Lamp will be drawn here by JavaScript -->
-                    </svg>
-                    <div class="terminal return" data-component="lamp" data-terminal="return" title="Retorno (Preto)"></div>
-                    <div class="terminal neutral" data-component="lamp" data-terminal="neutral" title="Neutro (Azul)"></div>
+        <!-- Área principal do jogo - Aba Interruptor Simples -->
+        <div id="tab-simples" class="tab-content active">
+            <div id="game-container">
+                <div id="distribution-box" class="component">
+                    <span>Quadro de Distribuição</span>
+                    <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
                 </div>
-            </div>
 
-            <svg id="wiring-layer"></svg>
+                <div id="switch" class="component">
+                    <span>Interruptor Simples</span>
+                    <div class="terminal phase" data-component="switch" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal return" data-component="switch" data-terminal="return" title="Retorno (Preto)"></div>
+                </div>
+
+                <div id="lamp" class="component">
+                    <span>Lâmpada</span>
+                    <div class="lamp-container">
+                        <svg id="lamp-svg" width="80" height="120" viewBox="0 0 80 120">
+                            <!-- Lamp will be drawn here by JavaScript -->
+                        </svg>
+                        <div class="terminal return" data-component="lamp" data-terminal="return" title="Retorno (Preto)"></div>
+                        <div class="terminal neutral" data-component="lamp" data-terminal="neutral" title="Neutro (Azul)"></div>
+                    </div>
+                </div>
+
+                <svg id="wiring-layer"></svg>
+            </div>
+        </div>
+
+        <!-- Área principal do jogo - Aba Interruptor Paralelo -->
+        <div id="tab-paralelo" class="tab-content">
+            <div id="game-container-paralelo" class="game-container">
+                <div id="distribution-box-paralelo" class="component">
+                    <span>Quadro de Distribuição</span>
+                    <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
+                </div>
+
+                <div id="switch-paralelo-1" class="component switch-paralelo">
+                    <span>Interruptor Paralelo 1</span>
+                    <div class="terminal phase" data-component="switch-p1" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal return1" data-component="switch-p1" data-terminal="return1" title="Retorno 1 (Preto)"></div>
+                    <div class="terminal return2" data-component="switch-p1" data-terminal="return2" title="Retorno 2 (Preto)"></div>
+                </div>
+
+                <div id="switch-paralelo-2" class="component switch-paralelo">
+                    <span>Interruptor Paralelo 2</span>
+                    <div class="terminal return1" data-component="switch-p2" data-terminal="return1" title="Retorno 1 (Preto)"></div>
+                    <div class="terminal return2" data-component="switch-p2" data-terminal="return2" title="Retorno 2 (Preto)"></div>
+                    <div class="terminal lamp-return" data-component="switch-p2" data-terminal="lamp-return" title="Retorno Lâmpada (Preto)"></div>
+                </div>
+
+                <div id="lamp-paralelo" class="component">
+                    <span>Lâmpada</span>
+                    <div class="lamp-container">
+                        <svg id="lamp-svg-paralelo" width="80" height="120" viewBox="0 0 80 120">
+                            <!-- Lamp will be drawn here by JavaScript -->
+                        </svg>
+                        <div class="terminal return" data-component="lamp-p" data-terminal="return" title="Retorno (Preto)"></div>
+                        <div class="terminal neutral" data-component="lamp-p" data-terminal="neutral" title="Neutro (Azul)"></div>
+                    </div>
+                </div>
+
+                <svg id="wiring-layer-paralelo" class="wiring-layer"></svg>
+            </div>
+        </div>
+
+        <!-- Área principal do jogo - Aba Interruptor Intermediário -->
+        <div id="tab-intermediario" class="tab-content">
+            <div id="game-container-intermediario" class="game-container">
+                <div id="distribution-box-intermediario" class="component">
+                    <span>Quadro de Distribuição</span>
+                    <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
+                </div>
+
+                <div id="switch-intermediario" class="component switch-intermediario">
+                    <span>Interruptor Intermediário</span>
+                    <div class="terminal phase" data-component="switch-i" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal return1" data-component="switch-i" data-terminal="return1" title="Retorno 1 (Preto)"></div>
+                    <div class="terminal return2" data-component="switch-i" data-terminal="return2" title="Retorno 2 (Preto)"></div>
+                    <div class="terminal return3" data-component="switch-i" data-terminal="return3" title="Retorno 3 (Preto)"></div>
+                </div>
+
+                <div id="lamp-intermediario" class="component">
+                    <span>Lâmpada</span>
+                    <div class="lamp-container">
+                        <svg id="lamp-svg-intermediario" width="80" height="120" viewBox="0 0 80 120">
+                            <!-- Lamp will be drawn here by JavaScript -->
+                        </svg>
+                        <div class="terminal return" data-component="lamp-i" data-terminal="return" title="Retorno (Preto)"></div>
+                        <div class="terminal neutral" data-component="lamp-i" data-terminal="neutral" title="Neutro (Azul)"></div>
+                    </div>
+                </div>
+
+                <svg id="wiring-layer-intermediario" class="wiring-layer"></svg>
+            </div>
         </div>
     </div>
 
