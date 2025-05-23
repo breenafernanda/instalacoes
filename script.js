@@ -3,13 +3,86 @@ document.addEventListener('DOMContentLoaded', () => {
     const terminals = document.querySelectorAll('.terminal');
     const wireSelectorButtons = document.querySelectorAll('#wire-selector button[data-color]');
     const resetButton = document.getElementById('reset-button');
-    const lampBulb = document.getElementById('lamp-bulb');
     const statusMessage = document.getElementById('status-message');
     const gameContainer = document.getElementById('game-container');
+    const lampSvg = document.getElementById('lamp-svg');
 
     let selectedWireColor = null;
     let firstTerminal = null;
     let connections = []; // Stores { id1: 'comp-term', id2: 'comp-term', color: 'red', element: lineElement }
+    let isLampOn = false;
+
+    // --- Draw Lamp using SVG ---
+    function drawLamp() {
+        // Clear existing content
+        lampSvg.innerHTML = '';
+        
+        // Create SVG elements for lamp
+        // Socket (black part)
+        const socket = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        socket.setAttribute('d', 'M30,20 L50,20 L45,40 L35,40 Z');
+        socket.setAttribute('fill', '#333');
+        socket.setAttribute('stroke', '#222');
+        socket.setAttribute('stroke-width', '1');
+        lampSvg.appendChild(socket);
+        
+        // Socket base (small connector)
+        const socketBase = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        socketBase.setAttribute('x', '35');
+        socketBase.setAttribute('y', '40');
+        socketBase.setAttribute('width', '10');
+        socketBase.setAttribute('height', '5');
+        socketBase.setAttribute('fill', '#555');
+        socketBase.setAttribute('stroke', '#333');
+        socketBase.setAttribute('stroke-width', '1');
+        lampSvg.appendChild(socketBase);
+        
+        // Bulb glass
+        const bulbGlass = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        bulbGlass.setAttribute('cx', '40');
+        bulbGlass.setAttribute('cy', '65');
+        bulbGlass.setAttribute('rx', '20');
+        bulbGlass.setAttribute('ry', '25');
+        bulbGlass.setAttribute('fill', isLampOn ? '#ffffc0' : '#f0f0f0');
+        bulbGlass.setAttribute('stroke', '#ddd');
+        bulbGlass.setAttribute('stroke-width', '1');
+        bulbGlass.setAttribute('id', 'bulb-glass');
+        lampSvg.appendChild(bulbGlass);
+        
+        // Filament
+        const filament1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        filament1.setAttribute('d', 'M40,45 C35,50 45,60 40,65');
+        filament1.setAttribute('fill', 'none');
+        filament1.setAttribute('stroke', isLampOn ? '#ffff00' : '#aaa');
+        filament1.setAttribute('stroke-width', isLampOn ? '2' : '1');
+        filament1.setAttribute('id', 'filament1');
+        lampSvg.appendChild(filament1);
+        
+        const filament2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        filament2.setAttribute('d', 'M40,45 C45,50 35,60 40,65');
+        filament2.setAttribute('fill', 'none');
+        filament2.setAttribute('stroke', isLampOn ? '#ffff00' : '#aaa');
+        filament2.setAttribute('stroke-width', isLampOn ? '2' : '1');
+        filament2.setAttribute('id', 'filament2');
+        lampSvg.appendChild(filament2);
+        
+        // Glow effect when lamp is on
+        if (isLampOn) {
+            const glow = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            glow.setAttribute('cx', '40');
+            glow.setAttribute('cy', '65');
+            glow.setAttribute('rx', '25');
+            glow.setAttribute('ry', '30');
+            glow.setAttribute('fill', 'rgba(255, 255, 200, 0.5)');
+            glow.setAttribute('filter', 'blur(5px)');
+            
+            // Insert glow behind the bulb
+            lampSvg.insertBefore(glow, bulbGlass);
+        }
+    }
+    
+    // Initial lamp drawing
+    drawLamp();
 
     // --- Wire Selection --- 
     wireSelectorButtons.forEach(button => {
@@ -17,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedWireColor = button.getAttribute('data-color');
             statusMessage.textContent = `Fio ${selectedWireColor} selecionado. Clique no primeiro terminal.`;
             firstTerminal = null; // Reset first terminal selection when changing wire
-            // Optional: Add visual feedback for selected button
+            // Visual feedback for selected button
             wireSelectorButtons.forEach(btn => btn.style.border = 'none');
             button.style.border = '2px solid yellow'; 
         });
@@ -37,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // First terminal clicked
                 firstTerminal = terminal;
                 statusMessage.textContent = `Primeiro terminal (${currentTerminalId}) selecionado. Clique no segundo terminal.`;
-                // Optional: Add visual feedback for first selected terminal
+                // Visual feedback for first selected terminal
                 terminal.style.boxShadow = '0 0 10px yellow'; 
             } else {
                 // Second terminal clicked
@@ -118,7 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
             { t1: 'switch-return', t2: 'lamp-return', color: 'black' }
         ];
 
-        let correctCount = 0;
         let isCorrect = false;
 
         if (connections.length === correctConnections.length) {
@@ -133,15 +205,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Update lamp state
+        isLampOn = isCorrect;
+        
+        // Redraw lamp with new state
+        drawLamp();
+        
         if (isCorrect) {
-            lampBulb.classList.remove('lamp-off');
-            lampBulb.classList.add('lamp-on');
             statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
-        } else {
-            lampBulb.classList.remove('lamp-on');
-            lampBulb.classList.add('lamp-off');
-            // Provide more specific feedback if needed, or keep the last connection message
-            // statusMessage.textContent = 'Ligação incorreta. Verifique as conexões.'; 
         }
     }
 
@@ -157,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedWireColor = null;
         firstTerminal = null;
         // Reset lamp
-        lampBulb.classList.remove('lamp-on');
-        lampBulb.classList.add('lamp-off');
+        isLampOn = false;
+        drawLamp();
         // Reset status message
         statusMessage.textContent = 'Jogo reiniciado. Selecione um fio e clique em dois terminais para conectar.';
         // Reset button styles
