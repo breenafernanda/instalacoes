@@ -4,7 +4,7 @@ body {
     flex-direction: column;
     align-items: center;
     margin-top: 20px;
-    background-color: #f4f4f4;
+    background-color: #e0e0e0; /* Slightly darker background */
 }
 
 h1 {
@@ -14,89 +14,149 @@ h1 {
 #game-container {
     position: relative;
     width: 600px;
-    height: 400px;
+    height: 450px; /* Increased height for better spacing */
     border: 1px solid #ccc;
     background-color: #fff;
     margin-bottom: 20px;
-    background-image: url('background_pattern.png'); /* Optional: Add a subtle background if needed */
-    background-size: cover;
+    overflow: hidden; /* Hide overflow if elements go outside */
 }
 
 .component {
     position: absolute;
-    border: 1px solid #999;
-    background-color: #eee;
-    padding: 10px;
-    border-radius: 5px;
+    /* Removed default border/background for custom styling */
     text-align: center;
-    min-width: 100px;
 }
 
 .component span {
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 5px; /* Reduced margin */
     font-weight: bold;
+    color: #555;
+    font-size: 0.9em;
 }
 
+/* Quadro de Distribuição - Simple Box */
 #distribution-box {
-    top: 20px;
+    top: 30px;
     left: 250px;
+    width: 100px;
+    height: 50px;
+    background-color: #d3d3d3; /* Light gray */
+    border: 1px solid #a9a9a9; /* Darker gray border */
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+#distribution-box span {
+    position: absolute;
+    top: -20px; /* Position label above */
+    left: 0;
+    width: 100%;
 }
 
+/* Interruptor - More Realistic */
 #switch {
     bottom: 50px;
     left: 100px;
+    width: 60px; /* Width of the switch plate */
+    height: 100px; /* Height of the switch plate */
+    background-color: #f8f8f8; /* Off-white */
+    border: 1px solid #b0b0b0;
+    border-radius: 5px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1), inset 0 0 5px rgba(0,0,0,0.05);
 }
-
-#lamp {
-    bottom: 150px;
-    right: 100px;
+#switch span {
+    position: absolute;
+    bottom: -20px; /* Position label below */
+    left: 0;
+    width: 100%;
 }
-
-.terminal {
+/* Switch toggle (visual only) */
+#switch::before {
+    content: ";
+    position: absolute;
+    top: 35px;
+    left: 20px;
     width: 20px;
-    height: 20px;
-    border: 1px solid #666;
+    height: 30px;
+    background-color: #e0e0e0;
+    border: 1px solid #a0a0a0;
+    border-radius: 2px;
+}
+
+/* Lâmpada - More Realistic */
+#lamp {
+    bottom: 180px; /* Adjusted position */
+    right: 100px;
+    width: 60px;
+    height: 100px; /* Height includes bulb and socket */
+}
+#lamp span {
+    position: absolute;
+    top: -20px; /* Position label above */
+    left: 0;
+    width: 100%;
+}
+/* Lamp Socket */
+#lamp-socket {
+    width: 40px;
+    height: 30px;
+    background-color: #333; /* Black socket */
+    border-radius: 5px 5px 0 0;
+    margin: 0 auto;
+    position: relative;
+    top: 10px; /* Position socket */
+}
+/* Lamp Bulb */
+#lamp-bulb {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    margin: 0 auto;
+    position: relative;
+    top: 10px; /* Connects to socket */
+    background-color: #e8f0f8; /* Light blueish tint for off bulb */
+    box-shadow: inset 0 -2px 5px rgba(0,0,0,0.1);
+}
+
+.lamp-off {
+    background-color: #e8f0f8; /* Light blueish tint */
+}
+
+.lamp-on {
+    background-color: #fffacd; /* Lemon chiffon yellow */
+    box-shadow: 0 0 25px #ffd700, inset 0 0 10px #ffffff; /* Gold glow */
+    border-color: #fff;
+}
+
+/* Terminais - Smaller, positioned on components */
+.terminal {
+    width: 12px; /* Smaller */
+    height: 12px;
+    border: 1px solid #555;
     border-radius: 50%;
     position: absolute;
     cursor: pointer;
     background-color: #fff; /* Default */
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    box-shadow: 0 0 3px rgba(0,0,0,0.2);
+    z-index: 10; /* Ensure terminals are clickable */
 }
 
 .terminal:hover {
-    box-shadow: 0 0 8px rgba(0,0,255,0.5);
+    box-shadow: 0 0 6px rgba(0,0,255,0.6);
 }
 
-/* Terminal Colors & Positions */
-#distribution-box .terminal.phase { background-color: red; bottom: 10px; left: 20px; }
-#distribution-box .terminal.neutral { background-color: blue; bottom: 10px; right: 20px; }
+/* Terminal Colors & Positions (Adjusted for new visuals) */
+#distribution-box .terminal.phase { background-color: red; bottom: 5px; left: 15px; }
+#distribution-box .terminal.neutral { background-color: blue; bottom: 5px; right: 15px; }
 
-#switch .terminal.phase { background-color: red; top: 10px; left: 45px; }
-#switch .terminal.return { background-color: black; bottom: 10px; left: 45px; }
+#switch .terminal.phase { background-color: red; top: 10px; left: 24px; } /* Top screw */
+#switch .terminal.return { background-color: black; bottom: 10px; left: 24px; } /* Bottom screw */
 
-#lamp .terminal.return { background-color: black; top: 10px; left: 45px; }
-#lamp .terminal.neutral { background-color: blue; bottom: 10px; left: 45px; }
+#lamp .terminal.return { background-color: black; top: 15px; left: 5px; } /* Left side of socket */
+#lamp .terminal.neutral { background-color: blue; top: 15px; right: 5px; } /* Right side of socket */
 
-#lamp-bulb {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #ccc;
-    margin: 10px auto 0;
-    position: relative; /* Needed for absolute positioning of terminals if bulb is part of component */
-    top: 20px; /* Adjust as needed */
-}
-
-.lamp-off {
-    background-color: #ddd;
-}
-
-.lamp-on {
-    background-color: yellow;
-    box-shadow: 0 0 20px yellow;
-}
-
+/* Wiring Layer */
 #wiring-layer {
     position: absolute;
     top: 0;
@@ -106,24 +166,44 @@ h1 {
     pointer-events: none; /* Allows clicks to pass through to terminals */
 }
 
+/* Wire Selector */
 #wire-selector {
     text-align: center;
+    margin-top: 10px;
+}
+
+#wire-selector h2 {
+    font-size: 1.1em;
+    margin-bottom: 10px;
 }
 
 #wire-selector button {
     margin: 5px;
-    padding: 10px 15px;
+    padding: 8px 12px; /* Slightly smaller buttons */
     cursor: pointer;
-    border: none;
+    border: 2px solid transparent; /* For selection highlight */
     border-radius: 5px;
+    font-size: 0.9em;
 }
 
-#wire-selector button[data-color="red"] { background-color: red; color: white; }
-#wire-selector button[data-color="blue"] { background-color: blue; color: white; }
-#wire-selector button[data-color="black"] { background-color: black; color: white; }
-#reset-button { background-color: #aaa; color: white; }
+#wire-selector button[data-color="red"] { background-color: #dc3545; color: white; border-color: #dc3545; }
+#wire-selector button[data-color="blue"] { background-color: #007bff; color: white; border-color: #007bff; }
+#wire-selector button[data-color="black"] { background-color: #343a40; color: white; border-color: #343a40; }
+#reset-button { background-color: #6c757d; color: white; border-color: #6c757d; }
+
+#wire-selector button:hover {
+    opacity: 0.9;
+}
+
+/* Style for selected wire button */
+#wire-selector button.selected {
+    box-shadow: 0 0 8px yellow;
+    border: 2px solid yellow;
+}
 
 #status-message {
+    margin-top: 15px;
     font-style: italic;
     color: #555;
+    min-height: 1.2em; /* Prevent layout shift */
 }
