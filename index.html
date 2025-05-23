@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo Instalações Elétricas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Jogo Instalações Elétricas - Ligue os Pontos</h1>
+
+    <div id="game-container">
+        <div id="distribution-box" class="component">
+            <span>Quadro de Distribuição</span>
+            <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
+            <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
+        </div>
+
+        <div id="switch" class="component">
+            <span>Interruptor Simples</span>
+            <div class="terminal phase" data-component="switch" data-terminal="phase" title="Fase (Vermelho)"></div>
+            <div class="terminal return" data-component="switch" data-terminal="return" title="Retorno (Preto)"></div>
+        </div>
+
+        <div id="lamp" class="component">
+            <span>Lâmpada</span>
+            <div class="terminal return" data-component="lamp" data-terminal="return" title="Retorno (Preto)"></div>
+            <div class="terminal neutral" data-component="lamp" data-terminal="neutral" title="Neutro (Azul)"></div>
+            <div id="lamp-bulb" class="lamp-off"></div>
+        </div>
+
+        <svg id="wiring-layer"></svg>
+
+    </div>
+
+    <div id="wire-selector">
+        <h2>Selecione o Fio:</h2>
+        <button data-color="red">Fio Vermelho (Fase)</button>
+        <button data-color="blue">Fio Azul (Neutro)</button>
+        <button data-color="black">Fio Preto (Retorno)</button>
+        <button id="reset-button">Reiniciar</button>
+        <p>Status: <span id="status-message">Selecione um fio e clique em dois terminais para conectar.</span></p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
