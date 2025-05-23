@@ -10,18 +10,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let selectedWireColor = null;
     let firstTerminal = null;
-    let connections = []; // Stores { id1: 'comp-term', id2: 'comp-term', color: 'red', element: lineElement }
+    let connections = []; // Stores { id1: 'comp-term', id2: 'comp-term', color: 'red', element: polylineElement }
     
     // Separate states for circuit and switch
     let isCircuitComplete = false; // Whether all connections are correct
     let isSwitchOn = true; // Whether the switch is in ON position
     let isLampOn = false; // Actual lamp state (depends on both circuit and switch)
     
+    // Grid configuration
+    const gridSize = 10; // Size of grid cells in pixels
+    const gridVisible = false; // Set to true for debugging
+    
     // Tooltip element for circuit state
     const tooltip = document.createElement('div');
     tooltip.className = 'tooltip';
     tooltip.style.display = 'none';
     document.body.appendChild(tooltip);
+
+    // --- Initialize Grid ---
+    function initializeGrid() {
+        if (gridVisible) {
+            // Create grid lines for debugging
+            const width = gameContainer.clientWidth;
+            const height = gameContainer.clientHeight;
+            
+            // Create vertical lines
+            for (let x = 0; x <= width; x += gridSize) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x);
+                line.setAttribute('y1', 0);
+                line.setAttribute('x2', x);
+                line.setAttribute('y2', height);
+                line.setAttribute('stroke', '#ddd');
+                line.setAttribute('stroke-width', '0.5');
+                line.setAttribute('stroke-dasharray', '2,2');
+                svgLayer.appendChild(line);
+            }
+            
+            // Create horizontal lines
+            for (let y = 0; y <= height; y += gridSize) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', 0);
+                line.setAttribute('y1', y);
+                line.setAttribute('x2', width);
+                line.setAttribute('y2', y);
+                line.setAttribute('stroke', '#ddd');
+                line.setAttribute('stroke-width', '0.5');
+                line.setAttribute('stroke-dasharray', '2,2');
+                svgLayer.appendChild(line);
+            }
+        }
+    }
+    
+    // --- Snap to Grid ---
+    function snapToGrid(value) {
+        return Math.round(value / gridSize) * gridSize;
+    }
 
     // --- Draw Lamp using SVG ---
     function drawLamp() {
@@ -115,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // --- Initial drawings ---
+    initializeGrid();
     drawLamp();
     drawSwitch();
 
@@ -219,15 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Draw the wire
-                const line = drawWire(firstTerminal, terminal, selectedWireColor);
+                // Draw the wire with polyline
+                const polyline = drawPolylineWire(firstTerminal, terminal, selectedWireColor);
                 
                 // Store the connection
                 connections.push({
                     id1: firstTerminalId,
                     id2: currentTerminalId,
                     color: selectedWireColor,
-                    element: line
+                    element: polyline
                 });
 
                 statusMessage.textContent = `Conexão ${selectedWireColor} feita entre ${firstTerminalId} e ${currentTerminalId}.`;
@@ -242,9 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Drawing Wires --- 
-    function drawWire(term1, term2, color) {
-        const rect = svgLayer.getBoundingClientRect();
+    // --- Drawing Polyline Wires --- 
+    function drawPolylineWire(term1, term2, color) {
         const gameRect = gameContainer.getBoundingClientRect();
 
         // Calculate coordinates relative to the SVG container
@@ -252,16 +296,50 @@ document.addEventListener('DOMContentLoaded', () => {
         const y1 = term1.getBoundingClientRect().top - gameRect.top + term1.offsetHeight / 2;
         const x2 = term2.getBoundingClientRect().left - gameRect.left + term2.offsetWidth / 2;
         const y2 = term2.getBoundingClientRect().top - gameRect.top + term2.offsetHeight / 2;
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x1);
-        line.setAttribute('y1', y1);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('stroke', color);
-        line.setAttribute('stroke-width', '3');
-        svgLayer.appendChild(line);
-        return line;
+        
+        // Snap coordinates to grid
+        const sx1 = snapToGrid(x1);
+        const sy1 = snapToGrid(y1);
+        const sx2 = snapToGrid(x2);
+        const sy2 = snapToGrid(y2);
+        
+        // Create polyline with orthogonal segments (L-shaped or Z-shaped)
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        
+        // Calculate midpoints for the polyline
+        let points = [];
+        
+        // Add starting point
+        points.push(x1, y1);
+        
+        // Determine if we should use L-shape or Z-shape
+        // We'll use a simple heuristic: if terminals are more horizontal than vertical, use Z-shape
+        // Otherwise use L-shape
+        const isHorizontal = Math.abs(x2 - x1) > Math.abs(y2 - y1);
+        
+        if (isHorizontal) {
+            // Z-shape: horizontal first, then vertical, then horizontal
+            const midX = (sx1 + sx2) / 2;
+            points.push(midX, sy1); // First horizontal segment
+            points.push(midX, sy2); // Vertical segment
+        } else {
+            // L-shape: vertical first, then horizontal
+            points.push(sx1, sy2); // Vertical segment
+        }
+        
+        // Add ending point
+        points.push(x2, y2);
+        
+        // Set polyline attributes
+        polyline.setAttribute('points', points.join(','));
+        polyline.setAttribute('fill', 'none');
+        polyline.setAttribute('stroke', color);
+        polyline.setAttribute('stroke-width', '3');
+        polyline.setAttribute('stroke-linecap', 'round');
+        polyline.setAttribute('stroke-linejoin', 'round');
+        
+        svgLayer.appendChild(polyline);
+        return polyline;
     }
 
     // --- Connection Verification --- 
@@ -304,6 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
         while (svgLayer.firstChild) {
             svgLayer.removeChild(svgLayer.firstChild);
         }
+        // Reinitialize grid
+        initializeGrid();
         // Clear connections array
         connections = [];
         // Reset state variables
