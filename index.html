@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo Instalações Elétricas</title>
+    <title>Instalações Elétricas UFTM</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Jogo Instalações Elétricas - Ligue os Pontos</h1>
+    <h1>INSTALAÇÕES ELÉTRICAS UFTM - Profª Juliane Fandi</h1>
 
     <!-- Sistema de abas -->
     <div class="tabs">
@@ -20,9 +20,9 @@
         <!-- Sidebar para seleção de fios -->
         <div id="wire-selector" class="sidebar">
             <h2>Selecione o Fio:</h2>
-            <button data-color="red">Fio Vermelho (Fase)</button>
-            <button data-color="blue">Fio Azul (Neutro)</button>
-            <button data-color="black">Fio Preto (Retorno)</button>
+            <button data-color="red">Fase</button>
+            <button data-color="blue">Neutro</button>
+            <button data-color="black">Retorno</button>
             <button id="reset-button">Reiniciar</button>
             <div class="status-container">
                 <p>Status: <span id="status-message">Selecione um fio e clique em dois terminais para conectar.</span></p>
@@ -64,22 +64,8 @@
             <div id="game-container-paralelo" class="game-container">
                 <div id="distribution-box-paralelo" class="component">
                     <span>Quadro de Distribuição</span>
-                    <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
-                    <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
-                </div>
-
-                <div id="switch-paralelo-1" class="component switch-paralelo">
-                    <span>Interruptor Paralelo 1</span>
-                    <div class="terminal phase" data-component="switch-p1" data-terminal="phase" title="Fase (Vermelho)"></div>
-                    <div class="terminal return1" data-component="switch-p1" data-terminal="return1" title="Retorno 1 (Preto)"></div>
-                    <div class="terminal return2" data-component="switch-p1" data-terminal="return2" title="Retorno 2 (Preto)"></div>
-                </div>
-
-                <div id="switch-paralelo-2" class="component switch-paralelo">
-                    <span>Interruptor Paralelo 2</span>
-                    <div class="terminal return1" data-component="switch-p2" data-terminal="return1" title="Retorno 1 (Preto)"></div>
-                    <div class="terminal return2" data-component="switch-p2" data-terminal="return2" title="Retorno 2 (Preto)"></div>
-                    <div class="terminal lamp-return" data-component="switch-p2" data-terminal="lamp-return" title="Retorno Lâmpada (Preto)"></div>
+                    <div class="terminal phase" data-component="db-p" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal neutral" data-component="db-p" data-terminal="neutral" title="Neutro (Azul)"></div>
                 </div>
 
                 <div id="lamp-paralelo" class="component">
@@ -93,6 +79,20 @@
                     </div>
                 </div>
 
+                <div id="switch-paralelo-1" class="component switch-paralelo">
+                    <span>Interruptor Paralelo 1</span>
+                    <div class="terminal top" data-component="switch-p1" data-terminal="top" title="Terminal Superior"></div>
+                    <div class="terminal middle" data-component="switch-p1" data-terminal="middle" title="Terminal Médio"></div>
+                    <div class="terminal bottom" data-component="switch-p1" data-terminal="bottom" title="Terminal Inferior"></div>
+                </div>
+
+                <div id="switch-paralelo-2" class="component switch-paralelo">
+                    <span>Interruptor Paralelo 2</span>
+                    <div class="terminal top" data-component="switch-p2" data-terminal="top" title="Terminal Superior"></div>
+                    <div class="terminal middle" data-component="switch-p2" data-terminal="middle" title="Terminal Médio"></div>
+                    <div class="terminal bottom" data-component="switch-p2" data-terminal="bottom" title="Terminal Inferior"></div>
+                </div>
+
                 <svg id="wiring-layer-paralelo" class="wiring-layer"></svg>
             </div>
         </div>
@@ -102,8 +102,8 @@
             <div id="game-container-intermediario" class="game-container">
                 <div id="distribution-box-intermediario" class="component">
                     <span>Quadro de Distribuição</span>
-                    <div class="terminal phase" data-component="db" data-terminal="phase" title="Fase (Vermelho)"></div>
-                    <div class="terminal neutral" data-component="db" data-terminal="neutral" title="Neutro (Azul)"></div>
+                    <div class="terminal phase" data-component="db-i" data-terminal="phase" title="Fase (Vermelho)"></div>
+                    <div class="terminal neutral" data-component="db-i" data-terminal="neutral" title="Neutro (Azul)"></div>
                 </div>
 
                 <div id="switch-intermediario" class="component switch-intermediario">
