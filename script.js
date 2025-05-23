@@ -6,11 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusMessage = document.getElementById('status-message');
     const gameContainer = document.getElementById('game-container');
     const lampSvg = document.getElementById('lamp-svg');
+    const switchElement = document.getElementById('switch');
 
     let selectedWireColor = null;
     let firstTerminal = null;
     let connections = []; // Stores { id1: 'comp-term', id2: 'comp-term', color: 'red', element: lineElement }
-    let isLampOn = false;
+    
+    // Separate states for circuit and switch
+    let isCircuitComplete = false; // Whether all connections are correct
+    let isSwitchOn = true; // Whether the switch is in ON position
+    let isLampOn = false; // Actual lamp state (depends on both circuit and switch)
+    
+    // Tooltip element for circuit state
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.style.display = 'none';
+    document.body.appendChild(tooltip);
 
     // --- Draw Lamp using SVG ---
     function drawLamp() {
@@ -81,8 +92,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Initial lamp drawing
+    // --- Draw Switch ---
+    function drawSwitch() {
+        // Update switch visual based on state
+        if (isSwitchOn) {
+            switchElement.classList.remove('switch-off');
+            switchElement.classList.add('switch-on');
+        } else {
+            switchElement.classList.remove('switch-on');
+            switchElement.classList.add('switch-off');
+        }
+        
+        // Update lamp state based on both circuit and switch
+        updateLampState();
+    }
+    
+    // --- Update Lamp State ---
+    function updateLampState() {
+        // Lamp is on only if circuit is complete AND switch is on
+        isLampOn = isCircuitComplete && isSwitchOn;
+        drawLamp();
+    }
+    
+    // --- Initial drawings ---
     drawLamp();
+    drawSwitch();
+
+    // --- Switch Click Handler ---
+    switchElement.addEventListener('click', (e) => {
+        // Ignore clicks on terminals
+        if (e.target.classList.contains('terminal')) {
+            return;
+        }
+        
+        // Toggle switch state
+        isSwitchOn = !isSwitchOn;
+        
+        // Update visuals
+        drawSwitch();
+        
+        // Show tooltip
+        showTooltip(e, getCircuitStateMessage());
+        
+        // Update status message
+        if (isCircuitComplete) {
+            statusMessage.textContent = isSwitchOn ? 
+                'Interruptor ligado. Lâmpada acesa!' : 
+                'Interruptor desligado. Lâmpada apagada.';
+        } else {
+            statusMessage.textContent = 'Interruptor ' + (isSwitchOn ? 'ligado' : 'desligado') + 
+                ', mas o circuito não está completo.';
+        }
+    });
+    
+    // --- Tooltip Functions ---
+    function showTooltip(event, message) {
+        tooltip.textContent = message;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (event.pageX + 10) + 'px';
+        tooltip.style.top = (event.pageY + 10) + 'px';
+        
+        // Hide tooltip after 2 seconds
+        setTimeout(() => {
+            tooltip.style.display = 'none';
+        }, 2000);
+    }
+    
+    function getCircuitStateMessage() {
+        if (!isCircuitComplete) {
+            return 'Circuito desconectado';
+        }
+        return isSwitchOn ? 'Lâmpada acesa' : 'Lâmpada apagada';
+    }
 
     // --- Wire Selection --- 
     wireSelectorButtons.forEach(button => {
@@ -191,10 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { t1: 'switch-return', t2: 'lamp-return', color: 'black' }
         ];
 
-        let isCorrect = false;
-
         if (connections.length === correctConnections.length) {
-            isCorrect = correctConnections.every(correctConn => {
+            isCircuitComplete = correctConnections.every(correctConn => {
                 return connections.some(userConn => 
                     userConn.color === correctConn.color &&
                     (
@@ -203,16 +282,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     )
                 );
             });
+        } else {
+            isCircuitComplete = false;
         }
 
-        // Update lamp state
-        isLampOn = isCorrect;
+        // Update lamp state based on circuit and switch
+        updateLampState();
         
-        // Redraw lamp with new state
-        drawLamp();
-        
-        if (isCorrect) {
-            statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
+        if (isCircuitComplete) {
+            if (isSwitchOn) {
+                statusMessage.textContent = 'Parabéns! A ligação está correta e a lâmpada acendeu!';
+            } else {
+                statusMessage.textContent = 'Ligação correta! Clique no interruptor para acender a lâmpada.';
+            }
         }
     }
 
@@ -227,9 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset state variables
         selectedWireColor = null;
         firstTerminal = null;
+        isCircuitComplete = false;
+        isSwitchOn = true;
         // Reset lamp
-        isLampOn = false;
-        drawLamp();
+        updateLampState();
+        drawSwitch();
         // Reset status message
         statusMessage.textContent = 'Jogo reiniciado. Selecione um fio e clique em dois terminais para conectar.';
         // Reset button styles

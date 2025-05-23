@@ -63,6 +63,8 @@ h1 {
     border: 1px solid #b0b0b0;
     border-radius: 5px;
     box-shadow: 1px 1px 3px rgba(0,0,0,0.1), inset 0 0 5px rgba(0,0,0,0.05);
+    cursor: pointer; /* Show pointer cursor on hover */
+    transition: all 0.2s ease; /* Smooth transition for toggle */
 }
 #switch span {
     position: absolute;
@@ -81,6 +83,19 @@ h1 {
     background-color: #e0e0e0;
     border: 1px solid #a0a0a0;
     border-radius: 2px;
+    transition: all 0.2s ease; /* Smooth transition for toggle */
+}
+
+/* Switch ON state */
+#switch.switch-on::before {
+    background-color: #e0e0e0;
+    transform: translateY(0);
+}
+
+/* Switch OFF state */
+#switch.switch-off::before {
+    background-color: #c0c0c0;
+    transform: translateY(10px);
 }
 
 /* Lâmpada - SVG Container */
@@ -106,6 +121,18 @@ h1 {
 #lamp-svg {
     width: 100%;
     height: 100%;
+}
+
+/* Tooltip styling */
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 100;
+    pointer-events: none;
 }
 
 /* Terminais - Smaller, positioned on components */
