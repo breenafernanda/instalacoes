@@ -19,7 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Grid configuration
     const gridSize = 10; // Size of grid cells in pixels
-    const gridVisible = false; // Set to true for debugging
+    const gridVisible = true; // Set to true for debugging
+    
+    // Polyline drawing state
+    let isDrawingWire = false;
+    let currentPolyline = null;
+    let currentPoints = [];
+    let currentWireColor = null;
+    let startTerminal = null;
+    let endTerminal = null;
     
     // Tooltip element for circuit state
     const tooltip = document.createElement('div');
@@ -29,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialize Grid ---
     function initializeGrid() {
+        // Clear existing grid
+        const gridLines = svgLayer.querySelectorAll('.grid-line');
+        gridLines.forEach(line => line.remove());
+        
         if (gridVisible) {
             // Create grid lines for debugging
             const width = gameContainer.clientWidth;
@@ -44,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute('stroke', '#ddd');
                 line.setAttribute('stroke-width', '0.5');
                 line.setAttribute('stroke-dasharray', '2,2');
+                line.classList.add('grid-line');
                 svgLayer.appendChild(line);
             }
             
@@ -57,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute('stroke', '#ddd');
                 line.setAttribute('stroke-width', '0.5');
                 line.setAttribute('stroke-dasharray', '2,2');
+                line.classList.add('grid-line');
                 svgLayer.appendChild(line);
             }
         }
@@ -219,12 +233,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // Visual feedback for selected button
             wireSelectorButtons.forEach(btn => btn.style.border = 'none');
             button.style.border = '2px solid yellow'; 
+            
+            // Cancel any ongoing wire drawing
+            cancelWireDrawing();
         });
     });
 
     // --- Terminal Clicking --- 
     terminals.forEach(terminal => {
-        terminal.addEventListener('click', () => {
+        terminal.addEventListener('click', (e) => {
             if (!selectedWireColor) {
                 statusMessage.textContent = 'Erro: Selecione uma cor de fio primeiro!';
                 return;
@@ -232,115 +249,131 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentTerminalId = `${terminal.dataset.component}-${terminal.dataset.terminal}`;
 
-            if (!firstTerminal) {
-                // First terminal clicked
-                firstTerminal = terminal;
-                statusMessage.textContent = `Primeiro terminal (${currentTerminalId}) selecionado. Clique no segundo terminal.`;
-                // Visual feedback for first selected terminal
-                terminal.style.boxShadow = '0 0 10px yellow'; 
-            } else {
-                // Second terminal clicked
-                const firstTerminalId = `${firstTerminal.dataset.component}-${firstTerminal.dataset.terminal}`;
-                
-                // Clear visual feedback for first terminal
-                firstTerminal.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
-
-                if (firstTerminal === terminal) {
-                    // Clicked the same terminal twice
-                    statusMessage.textContent = `Seleção cancelada. Fio ${selectedWireColor} ainda selecionado. Clique no primeiro terminal.`;
-                    firstTerminal = null;
-                    return;
+            // If we're already drawing a wire
+            if (isDrawingWire) {
+                // Check if we clicked on a terminal that's not the start terminal
+                if (terminal !== startTerminal) {
+                    // Complete the wire drawing
+                    endTerminal = terminal;
+                    
+                    // Add the final point (terminal position)
+                    const gameRect = gameContainer.getBoundingClientRect();
+                    const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
+                    const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
+                    
+                    currentPoints.push(x, y);
+                    updatePolyline();
+                    
+                    // Store the connection
+                    const startTerminalId = `${startTerminal.dataset.component}-${startTerminal.dataset.terminal}`;
+                    connections.push({
+                        id1: startTerminalId,
+                        id2: currentTerminalId,
+                        color: currentWireColor,
+                        element: currentPolyline
+                    });
+                    
+                    statusMessage.textContent = `Conexão ${currentWireColor} feita entre ${startTerminalId} e ${currentTerminalId}.`;
+                    
+                    // Reset drawing state
+                    isDrawingWire = false;
+                    currentPolyline = null;
+                    currentPoints = [];
+                    startTerminal = null;
+                    endTerminal = null;
+                    
+                    // Check connections
+                    checkConnections();
                 }
-
-                // Check if connection already exists (in either direction)
-                const connectionExists = connections.some(conn => 
-                    (conn.id1 === firstTerminalId && conn.id2 === currentTerminalId) ||
-                    (conn.id1 === currentTerminalId && conn.id2 === firstTerminalId)
-                );
-
-                if (connectionExists) {
-                    statusMessage.textContent = 'Erro: Já existe uma conexão entre esses terminais.';
-                    firstTerminal = null;
-                    return;
-                }
-
-                // Draw the wire with polyline
-                const polyline = drawPolylineWire(firstTerminal, terminal, selectedWireColor);
-                
-                // Store the connection
-                connections.push({
-                    id1: firstTerminalId,
-                    id2: currentTerminalId,
-                    color: selectedWireColor,
-                    element: polyline
-                });
-
-                statusMessage.textContent = `Conexão ${selectedWireColor} feita entre ${firstTerminalId} e ${currentTerminalId}.`;
-                
-                // Reset for next connection
-                firstTerminal = null;
-                // Keep wire color selected
-
-                // Check connections after drawing
-                checkConnections(); 
+                return;
             }
+
+            // Start drawing a new wire
+            startTerminal = terminal;
+            currentWireColor = selectedWireColor;
+            isDrawingWire = true;
+            
+            // Create a new polyline
+            currentPolyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            currentPolyline.setAttribute('fill', 'none');
+            currentPolyline.setAttribute('stroke', currentWireColor);
+            currentPolyline.setAttribute('stroke-width', '3');
+            currentPolyline.setAttribute('stroke-linecap', 'round');
+            currentPolyline.setAttribute('stroke-linejoin', 'round');
+            svgLayer.appendChild(currentPolyline);
+            
+            // Add the first point (terminal position)
+            const gameRect = gameContainer.getBoundingClientRect();
+            const x = terminal.getBoundingClientRect().left - gameRect.left + terminal.offsetWidth / 2;
+            const y = terminal.getBoundingClientRect().top - gameRect.top + terminal.offsetHeight / 2;
+            
+            currentPoints = [x, y];
+            updatePolyline();
+            
+            // Visual feedback
+            terminal.style.boxShadow = '0 0 10px yellow';
+            
+            statusMessage.textContent = `Iniciando conexão do terminal ${currentTerminalId}. Clique nos pontos do grid para desenhar o fio e termine clicando em outro terminal.`;
         });
     });
-
-    // --- Drawing Polyline Wires --- 
-    function drawPolylineWire(term1, term2, color) {
-        const gameRect = gameContainer.getBoundingClientRect();
-
-        // Calculate coordinates relative to the SVG container
-        const x1 = term1.getBoundingClientRect().left - gameRect.left + term1.offsetWidth / 2;
-        const y1 = term1.getBoundingClientRect().top - gameRect.top + term1.offsetHeight / 2;
-        const x2 = term2.getBoundingClientRect().left - gameRect.left + term2.offsetWidth / 2;
-        const y2 = term2.getBoundingClientRect().top - gameRect.top + term2.offsetHeight / 2;
-        
-        // Snap coordinates to grid
-        const sx1 = snapToGrid(x1);
-        const sy1 = snapToGrid(y1);
-        const sx2 = snapToGrid(x2);
-        const sy2 = snapToGrid(y2);
-        
-        // Create polyline with orthogonal segments (L-shaped or Z-shaped)
-        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-        
-        // Calculate midpoints for the polyline
-        let points = [];
-        
-        // Add starting point
-        points.push(x1, y1);
-        
-        // Determine if we should use L-shape or Z-shape
-        // We'll use a simple heuristic: if terminals are more horizontal than vertical, use Z-shape
-        // Otherwise use L-shape
-        const isHorizontal = Math.abs(x2 - x1) > Math.abs(y2 - y1);
-        
-        if (isHorizontal) {
-            // Z-shape: horizontal first, then vertical, then horizontal
-            const midX = (sx1 + sx2) / 2;
-            points.push(midX, sy1); // First horizontal segment
-            points.push(midX, sy2); // Vertical segment
-        } else {
-            // L-shape: vertical first, then horizontal
-            points.push(sx1, sy2); // Vertical segment
+    
+    // --- Game Container Click for Wire Drawing ---
+    gameContainer.addEventListener('click', (e) => {
+        // Only process clicks when drawing a wire and not clicking on terminals
+        if (!isDrawingWire || e.target.classList.contains('terminal')) {
+            return;
         }
         
-        // Add ending point
-        points.push(x2, y2);
+        // Get click position relative to game container
+        const gameRect = gameContainer.getBoundingClientRect();
+        const x = e.clientX - gameRect.left;
+        const y = e.clientY - gameRect.top;
         
-        // Set polyline attributes
-        polyline.setAttribute('points', points.join(','));
-        polyline.setAttribute('fill', 'none');
-        polyline.setAttribute('stroke', color);
-        polyline.setAttribute('stroke-width', '3');
-        polyline.setAttribute('stroke-linecap', 'round');
-        polyline.setAttribute('stroke-linejoin', 'round');
+        // Snap to grid
+        const snappedX = snapToGrid(x);
+        const snappedY = snapToGrid(y);
         
-        svgLayer.appendChild(polyline);
-        return polyline;
+        // Add point to current polyline
+        currentPoints.push(snappedX, snappedY);
+        updatePolyline();
+        
+        statusMessage.textContent = `Ponto adicionado (${snappedX}, ${snappedY}). Continue clicando para adicionar mais pontos ou clique em um terminal para finalizar.`;
+    });
+    
+    // --- Update Polyline ---
+    function updatePolyline() {
+        if (currentPolyline) {
+            currentPolyline.setAttribute('points', currentPoints.join(','));
+        }
     }
+    
+    // --- Cancel Wire Drawing ---
+    function cancelWireDrawing() {
+        if (isDrawingWire && currentPolyline) {
+            // Remove the polyline from SVG
+            svgLayer.removeChild(currentPolyline);
+            
+            // Reset drawing state
+            isDrawingWire = false;
+            currentPolyline = null;
+            currentPoints = [];
+            
+            // Reset visual feedback
+            if (startTerminal) {
+                startTerminal.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)';
+                startTerminal = null;
+            }
+            
+            statusMessage.textContent = `Desenho de fio cancelado. Selecione um terminal para começar novamente.`;
+        }
+    }
+    
+    // Add key handler for Escape to cancel wire drawing
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            cancelWireDrawing();
+        }
+    });
 
     // --- Connection Verification --- 
     function checkConnections() {
@@ -378,24 +411,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Reset Button --- 
     resetButton.addEventListener('click', () => {
+        // Cancel any ongoing wire drawing
+        cancelWireDrawing();
+        
         // Clear SVG lines
-        while (svgLayer.firstChild) {
-            svgLayer.removeChild(svgLayer.firstChild);
-        }
+        const wireElements = svgLayer.querySelectorAll('polyline:not(.grid-line)');
+        wireElements.forEach(el => el.remove());
+        
         // Reinitialize grid
         initializeGrid();
+        
         // Clear connections array
         connections = [];
+        
         // Reset state variables
         selectedWireColor = null;
         firstTerminal = null;
         isCircuitComplete = false;
         isSwitchOn = true;
+        
         // Reset lamp
         updateLampState();
         drawSwitch();
+        
         // Reset status message
         statusMessage.textContent = 'Jogo reiniciado. Selecione um fio e clique em dois terminais para conectar.';
+        
         // Reset button styles
         wireSelectorButtons.forEach(btn => btn.style.border = 'none');
         terminals.forEach(term => term.style.boxShadow = '0 0 5px rgba(0,0,0,0.2)');
